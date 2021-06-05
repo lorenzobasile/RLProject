@@ -59,11 +59,13 @@ def manhattan_distance(s1, s2):
     return abs(x1-x2)+abs(y1-y2)
 
 grid=TSGridworld(nrows, ncols, gamma, manhattan_distance)
-real_target=(3,6)
+real_target=(9,19)
 np.random.seed(0)
 for t in range(10000):
     target_pos=grid.sample_model()
     action=grid.policy(target_pos)
     new_state=grid.step(action)
-    obs=1 if np.random.uniform()>manhattan_distance(new_state, real_target) else 0
+    obs=1 if np.random.uniform()<1/(manhattan_distance(new_state, real_target)+1) else 0
+    print(new_state, " ", obs)
     grid.update(obs, new_state)
+    grid.render()
