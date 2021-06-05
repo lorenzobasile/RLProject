@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from itertools import product
 
 class TSGridworld():
     def __init__(self, nrows, ncols, gamma, distance):
@@ -12,15 +12,13 @@ class TSGridworld():
         plt.imshow(self.belief, cmap='gray', interpolation='nearest')
         plt.show()
     def update(self, observation, state):
+        lkl=np.vectorize(self.likelihood)
         nrows, ncols=self.dimensions
         likelihood_matrix=np.ones_like(self.belief)
-        for r in range(nrows):
-            for c in range(ncols):
-                likelihood_matrix[r,c]=self.likelihood(observation, (r,c), state)
+        for target_pos in product(range(nrows), range(ncols)):
+            likelihood_matrix[target_pos]=self.likelihood(observation, target_pos, state)
         marginal=np.sum(np.multiply(self.belief, likelihood_matrix))
-        for r in range(nrows):
-            for c in range(ncols):
-                self.belief[r,c]=self.belief[r,c]*self.likelihood(observation, (r,c), state)/marginal
+        self.belief=np.multiply(self.belief, likelihood_matrix)/marginal
     def step(self, action):
         new_state=self.state[0]+action[0], self.state[1]+action[1]
         if new_state[0]<self.dimensions[0] and new_state[0]>=0 and new_state[1]<self.dimensions[1] and new_state[1]>=0:
