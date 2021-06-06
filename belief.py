@@ -1,15 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
+import matplotlib.animation as animation
+
 
 class TSGridworld():
     def __init__(self, nrows, ncols, gamma, distance):
         self.dimensions=(nrows,ncols)
         self.belief=np.ones(self.dimensions)/(nrows*ncols)
+        self.belief_sequence=[self.belief]
         self.state=(0,0)
         self.distance=distance
     def render(self):
         plt.imshow(self.belief, cmap='gray', interpolation='nearest')
+        plt.show()
+    def init_animation(self):
+        pass
+    def updatefig(self, j):
+        if j==0:
+            self.im=plt.imshow(self.belief_sequence[0], cmap='autumn', vmin=0, vmax=1)
+            plt.colorbar()
+        self.im.set_array(self.belief_sequence[j])
+        return [self.im]
+    def animated_render(self):
+        fig = plt.figure()
+        ani = animation.FuncAnimation(fig, self.updatefig, init_func=self.init_animation, frames=range(len(self.belief_sequence)), repeat=False)
         plt.show()
     def update(self, observation, state):
         lkl=np.vectorize(self.likelihood)
@@ -19,6 +34,7 @@ class TSGridworld():
             likelihood_matrix[target_pos]=self.likelihood(observation, target_pos, state)
         marginal=np.sum(np.multiply(self.belief, likelihood_matrix))
         self.belief=np.multiply(self.belief, likelihood_matrix)/marginal
+        self.belief_sequence.append(self.belief)
     def step(self, action):
         new_state=self.state[0]+action[0], self.state[1]+action[1]
         if new_state[0]<self.dimensions[0] and new_state[0]>=0 and new_state[1]<self.dimensions[1] and new_state[1]>=0:
@@ -59,11 +75,11 @@ def manhattan_distance(s1, s2):
 grid=TSGridworld(nrows, ncols, gamma, manhattan_distance)
 real_target=(9,19)
 np.random.seed(0)
-for t in range(10000):
+for t in range(1000):
     target_pos=grid.sample_model()
     action=grid.policy(target_pos)
     new_state=grid.step(action)
     obs=1 if np.random.uniform()<1/(manhattan_distance(new_state, real_target)+1) else 0
     print(new_state, " ", obs)
     grid.update(obs, new_state)
-    grid.render()
+grid.animated_render()
