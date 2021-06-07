@@ -5,12 +5,14 @@ import matplotlib.animation as animation
 
 
 class TSGridworld():
-    def __init__(self, nrows, ncols, gamma, distance):
+    def __init__(self, nrows, ncols, gamma, distance, real_target, init_state):
         self.dimensions=(nrows,ncols)
         self.belief=np.ones(self.dimensions)/(nrows*ncols)
         self.belief_sequence=[self.belief]
-        self.state=(0,0)
+        self.state=init_state
         self.distance=distance
+        self.done=False
+        self.real_target=real_target
     def render(self):
         plt.imshow(self.belief, cmap='gray', interpolation='nearest')
         plt.show()
@@ -18,7 +20,7 @@ class TSGridworld():
         pass
     def updatefig(self, j):
         if j==0:
-            self.im=plt.imshow(self.belief_sequence[0], cmap='autumn', vmin=0, vmax=1)
+            self.im=plt.imshow(self.belief_sequence[0], cmap='autumn')#, vmin=0, vmax=1)
             plt.colorbar()
         self.im.set_array(self.belief_sequence[j])
         return [self.im]
@@ -39,12 +41,15 @@ class TSGridworld():
         new_state=self.state[0]+action[0], self.state[1]+action[1]
         if new_state[0]<self.dimensions[0] and new_state[0]>=0 and new_state[1]<self.dimensions[1] and new_state[1]>=0:
             self.state=new_state
+        if self.state==self.real_target:
+            self.done=True
         return self.state
-    def sample_model(self):
+    def thompson(self):
         index=np.random.choice(range(self.dimensions[0]*self.dimensions[1]), p=self.belief.flatten())
-        r=index//self.dimensions[1]
-        c=index%self.dimensions[1]
-        return (r,c)
+        return np.unravel_index(index, self.dimensions)
+    def greedy(self):
+        index=np.argmax(self.belief)
+        return np.unravel_index(index, self.dimensions)
     def policy(self, est_target):
         var_r=est_target[0]-self.state[0]
         var_c=est_target[1]-self.state[1]
@@ -62,6 +67,8 @@ class TSGridworld():
             return p
         else:
             return 1-p
+    def observe(self, state):
+        return 1 if np.random.uniform()<1/(manhattan_distance(state, self.real_target)+1) else 0
 
 nrows=10
 ncols=20
@@ -72,14 +79,35 @@ def manhattan_distance(s1, s2):
     x2,y2=s2
     return abs(x1-x2)+abs(y1-y2)
 
-grid=TSGridworld(nrows, ncols, gamma, manhattan_distance)
-real_target=(9,19)
-np.random.seed(0)
-for t in range(1000):
-    target_pos=grid.sample_model()
-    action=grid.policy(target_pos)
-    new_state=grid.step(action)
-    obs=1 if np.random.uniform()<1/(manhattan_distance(new_state, real_target)+1) else 0
-    print(new_state, " ", obs)
-    grid.update(obs, new_state)
-grid.animated_render()
+n_config=10
+n_episodes=20
+mean=0
+
+for i in range(n_config):
+    init_state = np.random.choice(range(nrows)), np.random.choice(range(ncols))
+    real_target = np.random.choice(range(nrows)), np.random.choice(range(ncols))
+    
+    #print("init state: ", init_state, "real target: ", real_target)
+  
+
+    #np.random.seed(i)
+    
+   
+    for j in range(n_episodes):
+        t=0
+        grid=TSGridworld(nrows, ncols, gamma, manhattan_distance, real_target, init_state)
+        while not grid.done:
+            target_pos=grid.greedy()
+            action=grid.policy(target_pos)
+            new_state=grid.step(action)
+            obs=grid.observe(new_state)
+            #print(new_state, " ", obs)
+            grid.update(obs, new_state)
+            t+=1
+        #grid.animated_render()
+        #print(t)
+        mean+=t
+    
+    
+mean /= n_config*n_episodes
+print("mean: ", mean)
