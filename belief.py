@@ -38,6 +38,7 @@ class TSGridworld():
         plt.pause(0.001)
 
     def update(self, observation, state):
+        nrows, ncols=self.dimensions
         self.likelihood_matrix=self.likelihood_fast(y=observation, est_target=self.state_list, state=state).reshape((nrows,ncols))
         self.belief=np.multiply(self.belief, self.likelihood_matrix)
         self.belief/=np.sum(self.belief)
