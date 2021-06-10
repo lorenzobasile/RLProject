@@ -5,10 +5,9 @@ import matplotlib.animation as animation
 import time
 
 class TSGridworld():
-    def __init__(self, nrows, ncols, gamma, distance, real_target, init_state):
+    def __init__(self, nrows, ncols, gamma, distance, real_target, init_state, render=True):
         self.dimensions=(nrows,ncols)
         self.belief=np.ones(self.dimensions)/(nrows*ncols)
-        self.belief_sequence=[self.belief]
         self.state=init_state
         self.distance=distance
         self.done=False
@@ -16,20 +15,19 @@ class TSGridworld():
         self.estimated_target=(None,None)     # estimated target position
         self.state_list=np.array([(i,j) for i, j in product(range(nrows),range(ncols))], dtype="i,i")
         self.likelihood_matrix=np.empty_like(self.belief)
-
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111)
-        self.im = self.ax.imshow(self.belief)
-        self.ax.set_xticks(np.arange(self.dimensions[1], dtype=np.int))   # questo non so perchè non funziona
-        self.ax.set_yticks(np.arange(self.dimensions[0], dtype=np.int))   # in verità funziona (?)
-        self.scat_me = self.ax.scatter(self.state[1], self.state[0], color='r', marker='o')
-        self.scat_target = self.ax.scatter(self.estimated_target[1], self.estimated_target[0], color='b', marker='x')
         self.likelihood_fast=np.vectorize(self.likelihood, excluded=['state'])
 
-        plt.show(block=False)
+        if render:
+          self.fig = plt.figure()
+          self.ax = self.fig.add_subplot(111)
+          self.im = self.ax.imshow(self.belief)
+          self.ax.set_xticks(np.arange(self.dimensions[1], dtype=np.int))
+          self.ax.set_yticks(np.arange(self.dimensions[0], dtype=np.int))
+          self.scat_me = self.ax.scatter(self.state[1], self.state[0], color='r', marker='o')
+          self.scat_target = self.ax.scatter(self.estimated_target[1], self.estimated_target[0], color='b', marker='x')
+          plt.show(block=False)
 
     def render(self):
-        time.sleep(0.1)
         self.im.autoscale()
         self.im.set_array(self.belief)
         self.scat_me.set_offsets([self.state[1], self.state[0]])
@@ -42,7 +40,6 @@ class TSGridworld():
         self.likelihood_matrix=self.likelihood_fast(y=observation, est_target=self.state_list, state=state).reshape((nrows,ncols))
         self.belief=np.multiply(self.belief, self.likelihood_matrix)
         self.belief/=np.sum(self.belief)
-        self.belief_sequence.append(self.belief)
 
     def step(self, action):
         new_state=self.state[0]+action[0], self.state[1]+action[1]
@@ -79,8 +76,8 @@ class TSGridworld():
     def observe(self, state):
         return 1 if np.random.uniform()<1/(self.distance(state, self.real_target)+1) else 0
 
-nrows=100
-ncols=200
+nrows=10
+ncols=20
 gamma=1
 
 def manhattan_distance(s1, s2):
@@ -98,7 +95,8 @@ for i in range(n_config):
         t=0
         grid=TSGridworld(nrows, ncols, gamma, manhattan_distance, real_target, init_state)
         while not grid.done:
-            target_pos=grid.thompson()
+            if t%10==0:
+                target_pos=grid.thompson()
             grid.render()
             action=grid.policy(target_pos)
             new_state=grid.step(action)
