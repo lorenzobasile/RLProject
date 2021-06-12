@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
 import matplotlib.animation as animation
-import time
+
+def manhattan_distance(s1, s2):
+    return abs(s1[0]-s2[0])+abs(s1[1]-s2[1])
 
 class TSGridworld():
     def __init__(self, nrows, ncols, gamma, distance, real_target, init_state, render=True):
@@ -76,36 +78,23 @@ class TSGridworld():
     def observe(self, state):
         return 1 if np.random.uniform()<1/(self.distance(state, self.real_target)+1) else 0
 
-nrows=10
-ncols=20
-gamma=1
-
-def manhattan_distance(s1, s2):
-    return abs(s1[0]-s2[0])+abs(s1[1]-s2[1])
-
-n_config=1
-n_episodes=1
-mean=0
-
-for i in range(n_config):
-    init_state = np.random.choice(range(nrows)), np.random.choice(range(ncols))
-    real_target = np.random.choice(range(nrows)), np.random.choice(range(ncols))
-
-    for j in range(n_episodes):
-        t=0
-        grid=TSGridworld(nrows, ncols, gamma, manhattan_distance, real_target, init_state)
-        while not grid.done:
-            if t%10==0:
-                target_pos=grid.thompson()
-            grid.render()
+    
+def thompson_loop(grid, n_steps, greedy=False):
+    t=0
+    while not grid.done:
+        if greedy:
+            target_pos=grid.greedy()
+        else:
+            target_pos=grid.thompson()
+        i=0
+        condition=True
+        while condition and i < n_steps and not grid.done:
             action=grid.policy(target_pos)
             new_state=grid.step(action)
             obs=grid.observe(new_state)
             grid.update(obs, new_state)
             t+=1
-        #print(t)
-        mean+=t
+            i+=1
+            condition= grid.state != target_pos
+    return t
 
-
-mean /= n_config*n_episodes
-print("mean: ", mean)
