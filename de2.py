@@ -17,9 +17,9 @@ distances=np.zeros(n_config)
 for j in range(n_config):
     init_state = np.random.choice(range(nrows)), np.random.choice(range(ncols))
     real_target = np.random.choice(range(nrows)), np.random.choice(range(ncols))
-    distance=manhattan_distance(init_state, real_target)
+    distance=squared_manhattan_distance(init_state, real_target)
     distances[j]=distance
-    
+
     for k in range(n_steps):
         grid=TSGridworld(nrows, ncols, gamma, manhattan_distance, real_target, init_state, render=False)
         times_thompson[k,j]=thompson_loop(grid, steps[k])
@@ -30,6 +30,3 @@ outfile = open("data.pickle",'wb')
 pickle.dump(distances, outfile)
 pickle.dump(times_thompson, outfile)
 pickle.dump(times_greedy, outfile)
-
-
-    
