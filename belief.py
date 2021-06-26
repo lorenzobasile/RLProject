@@ -35,14 +35,16 @@ class TSGridworld():
           self.im = self.ax.imshow(self.belief)
           self.ax.set_xticks(np.arange(self.dimensions[1], dtype=np.int))
           self.ax.set_yticks(np.arange(self.dimensions[0], dtype=np.int))
-          self.scat_me = self.ax.scatter(self.state[1], self.state[0], color='r', marker='o')
+          self.scat_mel = self.ax.scatter(self.state[1], self.state[0], color='w', marker='o')
           self.scat_target = self.ax.scatter(self.estimated_target[1], self.estimated_target[0], color='b', marker='x')
+          self.fig.colorbar(self.im, ax=self.ax, ticks=None)
           plt.show(block=False)
 
     def render(self):
         self.im.autoscale()
         self.im.set_array(self.belief)
-        self.scat_me.set_offsets([self.state[1], self.state[0]])
+        self.scat_me = self.ax.scatter(self.state[1], self.state[0], color='r', marker='o', s=10)
+        self.scat_mel.set_offsets([self.state[1], self.state[0]])
         self.scat_target.set_offsets([self.estimated_target[1], self.estimated_target[0]])
         self.fig.canvas.draw()
         plt.pause(0.1)
