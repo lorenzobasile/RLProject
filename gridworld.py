@@ -17,14 +17,14 @@ def euclidean_distance(s1, s2):
 
 class Gridworld():
     def __init__(self, nrows, ncols, distance, real_target, init_state, render=True):
-        self.dimensions=(nrows,ncols)
+        self.dimensions=(nrows,ncols)    # dimensions of the grid
         self.belief=np.ones(self.dimensions)/(nrows*ncols)    # uniform prior
         self.state=init_state    # current state
-        self.distance=distance
+        self.distance=distance    # distance to be used in the observation model
         self.done=False    # flag set to true when real target is reached (reward=1)
         self.real_target=real_target    # real target position
         self.estimated_target=(None,None)     # current estimate of target position
-        self.render=render
+        self.render=render    # if true, a graphical representation of the gridworld is printed
 
         if self.render:
           self.fig = plt.figure()
@@ -56,8 +56,6 @@ class Gridworld():
             likelihood_matrix[pos]=self.likelihood(observation, pos)
         self.belief=np.multiply(self.belief, likelihood_matrix)
         self.belief/=np.sum(self.belief)
-        if self.render:
-            self.show()
 
     #step: apply action and transition to the new state
 
@@ -98,11 +96,13 @@ class Gridworld():
         p=1/(self.distance(self.state, est_target)+1) # p: parameter of the Bernoulli distribution
         return p if y==1 else 1-p
 
-    #observe: get real (random) observation from the system
+    #observe: get real (random) observation from the environment
 
     def observe(self):
-        return 1 if np.random.uniform()<1/(self.distance(self.state, self.real_target)+1) else 0
+        p=1/(self.distance(self.state, self.real_target)+1)
+        return 1 if np.random.uniform()<p else 0
 
+#gridworld_search: simulates Thompson or greedy algorithm and returns the number of steps t taken until target is reached
 
 def gridworld_search(grid, n_steps, greedy=False):
     t=0
@@ -114,6 +114,8 @@ def gridworld_search(grid, n_steps, greedy=False):
         i=0
         reached_est_target=False
         while not reached_est_target and i < n_steps and not grid.done:
+            if grid.render:
+                grid.show()
             action=grid.policy()
             grid.step(action)
             obs=grid.observe()
