@@ -21,7 +21,7 @@ class Gridworld():
         self.belief=np.ones(self.dimensions)/(nrows*ncols)    # uniform prior
         self.state=init_state    # current state
         self.distance=distance    # distance to be used in the observation model
-        self.done=False    # flag set to true when real target is reached (reward=1)
+        self.done=(real_target==init_state)    # flag set to true when real target is reached (reward=1)
         self.real_target=real_target    # real target position
         self.estimated_target=(None,None)     # current estimate of target position
         self.render=render    # if true, a graphical representation of the gridworld is printed
@@ -38,12 +38,15 @@ class Gridworld():
           self.fig.colorbar(self.im, ax=self.ax, ticks=None)
           plt.show(block=False)
 
-    def show(self):
+    #show: display a graphical representation of the grid
+
+    def show(self, t):
         self.im.autoscale()
         self.im.set_array(self.belief)
         self.scat_me = self.ax.scatter(self.state[1], self.state[0], color='y', marker='o', s=8)
         self.scat_mel.set_offsets([self.state[1], self.state[0]])
         self.scat_target.set_offsets([self.estimated_target[1], self.estimated_target[0]])
+        self.ax.set_title("t="+str(t))
         self.fig.canvas.draw()
         plt.pause(0.1)
 
@@ -115,7 +118,7 @@ def gridworld_search(grid, n_steps, greedy=False):
         reached_est_target=False
         while not reached_est_target and i < n_steps and not grid.done:
             if grid.render:
-                grid.show()
+                grid.show(t)
             action=grid.policy()
             grid.step(action)
             obs=grid.observe()
@@ -123,4 +126,6 @@ def gridworld_search(grid, n_steps, greedy=False):
             t+=1
             i+=1
             reached_est_target = grid.state == grid.estimated_target
+    if grid.render:
+        grid.show(t)
     return t
