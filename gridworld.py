@@ -27,14 +27,14 @@ class Gridworld():
         self.render=render    # if true, a graphical representation of the gridworld is printed
 
         if self.render:
-          self.fig = plt.figure()
+          self.fig = plt.figure(figsize=(16, 10))
           self.ax = self.fig.add_subplot(111)
           self.im = self.ax.imshow(self.belief, cmap='Greens')
           self.ax.set_xticks(np.arange(self.dimensions[1], dtype=np.int))
           self.ax.set_yticks(np.arange(self.dimensions[0], dtype=np.int))
-          self.scat_real_target = self.ax.scatter(self.real_target[1], self.real_target[0], color='r', marker='*')
-          self.scat_mel = self.ax.scatter(self.state[1], self.state[0], color='k', marker='o')
-          self.scat_target = self.ax.scatter(self.estimated_target[1], self.estimated_target[0], color='b', marker='x')
+          self.scat_real_target = self.ax.scatter(self.real_target[1], self.real_target[0], color='r', marker='*', label="real target", s=150)
+          self.scat_mel = self.ax.scatter(self.state[1], self.state[0], color='orange', marker='o', label="current position", zorder=1, s=150)
+          self.scat_target = self.ax.scatter(self.estimated_target[1], self.estimated_target[0], color='b', marker='x', label="estimated target", s=150)
           self.fig.colorbar(self.im, ax=self.ax, ticks=None)
           plt.show(block=False)
 
@@ -43,11 +43,13 @@ class Gridworld():
     def show(self, t):
         self.im.autoscale()
         self.im.set_array(self.belief)
-        self.scat_me = self.ax.scatter(self.state[1], self.state[0], color='y', marker='o', s=8)
+        self.scat_me = self.ax.scatter(self.state[1], self.state[0], color='y', marker='o', s=16, zorder=0.1, label="visited positions")
         self.scat_mel.set_offsets([self.state[1], self.state[0]])
         self.scat_target.set_offsets([self.estimated_target[1], self.estimated_target[0]])
         self.ax.set_title("t="+str(t))
         self.fig.canvas.draw()
+        if t==0:
+            self.ax.legend(bbox_to_anchor=(0.6, -0.2))
         plt.pause(0.1)
 
     #update: posterior calculation given an observation
