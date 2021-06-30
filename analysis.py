@@ -9,8 +9,8 @@ distances = pickle.load(infile)
 times_thompson = pickle.load(infile)
 times_greedy = pickle.load(infile)
 
-regret_thompson = times_thompson**gamma-distances**gamma
-regret_greedy = times_greedy**gamma-distances**gamma
+regret_thompson = gamma**distances-gamma**times_thompson
+regret_greedy = gamma**distances-gamma**times_greedy
 
 avg_regret_thompson = np.average(regret_thompson, axis=1)
 avg_regret_greedy = np.average(regret_greedy, axis=1)
