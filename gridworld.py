@@ -57,10 +57,10 @@ class Gridworld():
     def update(self, observation):
         nrows, ncols=self.dimensions
         likelihood_matrix=np.empty_like(self.belief)
-        for pos in product(range(nrows), range(ncols)):
-            likelihood_matrix[pos]=self.likelihood(observation, pos)
+        for pos in product(range(nrows), range(ncols)):    # loop over each state in the grid
+            likelihood_matrix[pos]=self.likelihood(observation, pos)    # compute likelihood
         self.belief=np.multiply(self.belief, likelihood_matrix)
-        self.belief/=np.sum(self.belief)
+        self.belief/=np.sum(self.belief)     # normalize posterior
 
     #step: apply action and transition to the new state
 
@@ -109,7 +109,7 @@ class Gridworld():
 
 #gridworld_search: simulates Thompson or greedy algorithm and returns the number of steps t taken until target is reached
 
-def gridworld_search(grid, n_steps, greedy=False):
+def gridworld_search(grid, tau, greedy=False):
     t=0
     while not grid.done:
         if greedy:
@@ -118,7 +118,7 @@ def gridworld_search(grid, n_steps, greedy=False):
             grid.thompson()
         i=0
         reached_est_target=False
-        while not reached_est_target and i < n_steps and not grid.done:
+        while not reached_est_target and i < tau and not grid.done:
             if grid.render:
                 grid.show(t)
             action=grid.policy()
